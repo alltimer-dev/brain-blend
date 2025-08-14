@@ -209,13 +209,13 @@ const Index = () => {
         </div>
       </header>
 
-      <div className="container grid grid-cols-1 md:grid-cols-[280px_1fr] gap-0">
+      <div className="flex h-[calc(100vh-56px)]">
         {/* Sidebar */}
         <aside className={`
-          fixed md:relative top-14 md:top-0 left-0 z-10 h-[calc(100vh-56px)] md:h-[calc(100vh-56px)]
-          bg-background md:border-r transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-          ${sidebarOpen ? "w-80 md:w-[280px]" : "w-80 md:w-[280px]"}
+          fixed top-14 left-0 z-10 h-[calc(100vh-56px)] bg-background border-r 
+          transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          w-80
         `}>
           <div className="h-full flex flex-col">
             <div className="flex-1">
@@ -241,11 +241,11 @@ const Index = () => {
         </aside>
 
         {/* Main chat */}
-        <main className={`min-h-[calc(100vh-56px)] flex flex-col transition-all duration-300 ${sidebarOpen ? "md:ml-0" : "md:ml-0"}`}>
-          {/* Overlay for mobile when sidebar is open */}
+        <main className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? "ml-80" : "ml-0"}`}>
+          {/* Overlay when sidebar is open */}
           {sidebarOpen && (
             <div 
-              className="fixed inset-0 bg-black/20 z-5 md:hidden" 
+              className="fixed inset-0 bg-black/20 z-5" 
               onClick={() => setSidebarOpen(false)}
             />
           )}
