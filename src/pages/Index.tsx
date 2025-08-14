@@ -205,43 +205,67 @@ const Index = () => {
           <div className="flex items-center gap-2">
             <ModelPicker value={model} onChange={setModel} />
             <Button variant="secondary" onClick={handleNewChat}>New chat</Button>
-            <Button variant="outline" onClick={handleLogout} aria-label="Sign out">
-              <LogOut className="h-4 w-4 mr-2" /> Sign out
-            </Button>
           </div>
         </div>
       </header>
 
       <div className="container grid grid-cols-1 md:grid-cols-[280px_1fr] gap-0">
         {/* Sidebar */}
-        <aside className={(sidebarOpen ? "block" : "hidden md:block") + " md:border-r bg-background"}>
-          <div className="h-[calc(100vh-56px)]">
-            <SidebarConversations
-              items={conversations}
-              activeId={activeId}
-              onSelect={(id) => setActiveId(id)}
-              onDelete={handleDeleteChat}
-              onNew={handleNewChat}
-            />
+        <aside className={`
+          fixed md:relative top-14 md:top-0 left-0 z-10 h-[calc(100vh-56px)] md:h-[calc(100vh-56px)]
+          bg-background md:border-r transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+          ${sidebarOpen ? "w-80 md:w-[280px]" : "w-80 md:w-[280px]"}
+        `}>
+          <div className="h-full flex flex-col">
+            <div className="flex-1">
+              <SidebarConversations
+                items={conversations}
+                activeId={activeId}
+                onSelect={(id) => setActiveId(id)}
+                onDelete={handleDeleteChat}
+                onNew={handleNewChat}
+              />
+            </div>
+            <div className="p-4 border-t">
+              <Button 
+                variant="outline" 
+                onClick={handleLogout} 
+                className="w-full"
+                aria-label="Sign out"
+              >
+                <LogOut className="h-4 w-4 mr-2" /> Sign out
+              </Button>
+            </div>
           </div>
         </aside>
 
         {/* Main chat */}
-        <main className="min-h-[calc(100vh-56px)] flex flex-col">
+        <main className={`min-h-[calc(100vh-56px)] flex flex-col transition-all duration-300 ${sidebarOpen ? "md:ml-0" : "md:ml-0"}`}>
+          {/* Overlay for mobile when sidebar is open */}
+          {sidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-black/20 z-5 md:hidden" 
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+          
           <section className="flex-1 p-4 md:p-6">
-            <div className="mx-auto max-w-3xl space-y-4">
+            <div className="mx-auto max-w-4xl">
               {activeMessages.length === 0 ? (
                 <div className="text-center text-muted-foreground border rounded-lg p-8">
                   Start a conversation with {MODEL_OPTIONS.find((m) => m.id === model)?.label}.
                 </div>
               ) : (
-                activeMessages.map((m) => <ChatMessage key={m.id + m.created_at} role={m.role} content={m.content} model={m.model} />)
+                <div className="space-y-1">
+                  {activeMessages.map((m) => <ChatMessage key={m.id + m.created_at} role={m.role} content={m.content} model={m.model} />)}
+                </div>
               )}
             </div>
           </section>
           <Separator />
           <section className="p-4 md:p-6">
-            <div className="mx-auto max-w-3xl">
+            <div className="mx-auto max-w-4xl">
               <ChatInput onSend={sendMessage} disabled={sending} />
               <p className="mt-2 text-xs text-muted-foreground">Messages may be used to improve model quality. Do not share sensitive info.</p>
             </div>
