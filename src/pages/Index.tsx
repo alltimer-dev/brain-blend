@@ -10,7 +10,7 @@ import { ModelPicker, MODEL_OPTIONS } from "@/components/chat/ModelPicker";
 import { SidebarConversations, type Conversation } from "@/components/chat/SidebarConversations";
 import { LogOut, Menu } from "lucide-react";
 
-export type Message = { id?: string; role: "user" | "assistant" | "system"; content: string; created_at?: string };
+export type Message = { id?: string; role: "user" | "assistant" | "system"; content: string; created_at?: string; model?: string };
 
 const Index = () => {
   const navigate = useNavigate();
@@ -164,7 +164,7 @@ const Index = () => {
         .single();
       if (insertAiErr) throw insertAiErr;
 
-      setMessages((prev) => [...prev, insertedAI as Message]);
+      setMessages((prev) => [...prev, { ...insertedAI, model } as Message]);
 
       // Refresh conversations order
       const { data: convs } = await supabase
@@ -235,7 +235,7 @@ const Index = () => {
                   Start a conversation with {MODEL_OPTIONS.find((m) => m.id === model)?.label}.
                 </div>
               ) : (
-                activeMessages.map((m) => <ChatMessage key={m.id + m.created_at} role={m.role} content={m.content} />)
+                activeMessages.map((m) => <ChatMessage key={m.id + m.created_at} role={m.role} content={m.content} model={m.model} />)
               )}
             </div>
           </section>
