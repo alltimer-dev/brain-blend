@@ -21,6 +21,7 @@ serve(async (req) => {
     }
 
     let generatedText = "";
+    let responseData: any;
 
     if (String(model).startsWith("grok")) {
       const xaiKey = Deno.env.get("XAI_API_KEY");
@@ -35,12 +36,12 @@ serve(async (req) => {
         body: JSON.stringify({ model, messages }),
       });
 
-      const data = await res.json();
+      responseData = await res.json();
       if (!res.ok) {
-        console.error("xAI error", data);
-        throw new Error(data?.error?.message || "xAI request failed");
+        console.error("xAI error", responseData);
+        throw new Error(responseData?.error?.message || "xAI request failed");
       }
-      generatedText = data?.choices?.[0]?.message?.content ?? "";
+      generatedText = responseData?.choices?.[0]?.message?.content ?? "";
     } else {
       const openaiKey = Deno.env.get("OPENAI_API_KEY");
       if (!openaiKey) throw new Error("Missing OPENAI_API_KEY secret");
@@ -53,18 +54,18 @@ serve(async (req) => {
         body: JSON.stringify({ model, messages }),
       });
 
-      const data = await res.json();
+      responseData = await res.json();
       if (!res.ok) {
-        console.error("OpenAI error", data);
-        throw new Error(data?.error?.message || "OpenAI request failed");
+        console.error("OpenAI error", responseData);
+        throw new Error(responseData?.error?.message || "OpenAI request failed");
       }
-      generatedText = data?.choices?.[0]?.message?.content ?? "";
+      generatedText = responseData?.choices?.[0]?.message?.content ?? "";
     }
 
     return new Response(JSON.stringify({ 
       generatedText, 
-      model: data?.model,
-      usage: data?.usage 
+      model: responseData?.model,
+      usage: responseData?.usage 
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
