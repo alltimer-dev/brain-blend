@@ -9,8 +9,9 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { ModelPicker, MODEL_OPTIONS } from "@/components/chat/ModelPicker";
 import { SidebarConversations, type Conversation } from "@/components/chat/SidebarConversations";
 import { LogOut, Menu } from "lucide-react";
+import { type LogEntry } from "@/components/chat/LogModal";
 
-export type Message = { id?: string; role: "user" | "assistant" | "system"; content: string; created_at?: string; model?: string };
+export type Message = { id?: string; role: "user" | "assistant" | "system"; content: string; created_at?: string; model?: string; log?: LogEntry };
 
 const Index = () => {
   const navigate = useNavigate();
@@ -131,6 +132,8 @@ const Index = () => {
   const sendMessage = async (text: string) => {
     if (!userId) return;
     setSending(true);
+    const startTime = Date.now();
+    
     try {
       const convId = await ensureConversation(text);
       if (!convId) return;
@@ -152,10 +155,52 @@ const Index = () => {
       const { data: fnRes, error: fnErr } = await supabase.functions.invoke("ai-proxy", {
         body: { model, messages: ctx },
       });
-      if (fnErr) throw fnErr;
+      
+      const responseTime = Date.now() - startTime;
+      
+      if (fnErr) {
+        // Create error log
+        const errorLog: LogEntry = {
+          id: `log-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          model,
+          success: false,
+          error: fnErr.message,
+          responseTime,
+          requestContent: text,
+          responseContent: "",
+        };
+        
+        throw fnErr;
+      }
 
       const aiText = (fnRes as any)?.generatedText as string;
-      if (!aiText) throw new Error("AI response empty. Configure API keys?");
+      if (!aiText) {
+        const errorLog: LogEntry = {
+          id: `log-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          model,
+          success: false,
+          error: "AI response empty. Configure API keys?",
+          responseTime,
+          requestContent: text,
+          responseContent: "",
+        };
+        
+        throw new Error("AI response empty. Configure API keys?");
+      }
+
+      // Create success log
+      const successLog: LogEntry = {
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        model,
+        success: true,
+        responseTime,
+        requestContent: text,
+        responseContent: aiText,
+        tokensUsed: (fnRes as any)?.usage?.total_tokens || undefined,
+      };
 
       const { data: insertedAI, error: insertAiErr } = await supabase
         .from("messages")
@@ -164,7 +209,7 @@ const Index = () => {
         .single();
       if (insertAiErr) throw insertAiErr;
 
-      setMessages((prev) => [...prev, { ...insertedAI, model } as Message]);
+      setMessages((prev) => [...prev, { ...insertedAI, model, log: successLog } as Message]);
 
       // Refresh conversations order
       const { data: convs } = await supabase
@@ -258,7 +303,7 @@ const Index = () => {
                 </div>
               ) : (
                 <div className="space-y-1">
-                  {activeMessages.map((m) => <ChatMessage key={m.id + m.created_at} role={m.role} content={m.content} model={m.model} />)}
+                  {activeMessages.map((m) => <ChatMessage key={m.id + m.created_at} role={m.role} content={m.content} model={m.model} log={m.log} />)}
                 </div>
               )}
             </div>
