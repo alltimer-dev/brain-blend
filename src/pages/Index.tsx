@@ -194,7 +194,7 @@ const Index = () => {
       const successLog: LogEntry = {
         id: `log-${Date.now()}`,
         timestamp: new Date().toISOString(),
-        model,
+        model: (fnRes as any)?.model || model,
         success: true,
         responseTime,
         requestContent: text,

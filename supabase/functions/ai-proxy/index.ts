@@ -44,15 +44,13 @@ serve(async (req) => {
     } else {
       const openaiKey = Deno.env.get("OPENAI_API_KEY");
       if (!openaiKey) throw new Error("Missing OPENAI_API_KEY secret");
-
-      const mappedModel = model === "gpt-5" ? "gpt-4o" : model;
       const res = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${openaiKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ model: mappedModel, messages }),
+        body: JSON.stringify({ model, messages }),
       });
 
       const data = await res.json();
@@ -63,7 +61,11 @@ serve(async (req) => {
       generatedText = data?.choices?.[0]?.message?.content ?? "";
     }
 
-    return new Response(JSON.stringify({ generatedText }), {
+    return new Response(JSON.stringify({ 
+      generatedText, 
+      model: data?.model,
+      usage: data?.usage 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
