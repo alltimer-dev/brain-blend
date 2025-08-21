@@ -39,7 +39,11 @@ serve(async (req) => {
       responseData = await res.json();
       if (!res.ok) {
         console.error("xAI error", responseData);
-        throw new Error(responseData?.error?.message || "xAI request failed");
+        const errorMessage = `xAI API Error (${res.status}): ${responseData?.error?.message || responseData?.error || "Request failed"}`;
+        const detailedError = new Error(errorMessage);
+        (detailedError as any).statusCode = res.status;
+        (detailedError as any).details = responseData;
+        throw detailedError;
       }
       generatedText = responseData?.choices?.[0]?.message?.content ?? "";
     } else {
@@ -51,13 +55,26 @@ serve(async (req) => {
           "Authorization": `Bearer ${openaiKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ model, messages }),
+        body: JSON.stringify({
+          model,
+          messages,
+          // GPT-5 and newer models use max_completion_tokens instead of max_tokens
+          // and don't support temperature parameter
+          ...(model.startsWith('gpt-5') || model.startsWith('gpt-4.1') || model.startsWith('o3') || model.startsWith('o4') 
+            ? { max_completion_tokens: 4000 }
+            : { max_tokens: 4000, temperature: 0.7 }
+          )
+        }),
       });
 
       responseData = await res.json();
       if (!res.ok) {
         console.error("OpenAI error", responseData);
-        throw new Error(responseData?.error?.message || "OpenAI request failed");
+        const errorMessage = `OpenAI API Error (${res.status}): ${responseData?.error?.message || responseData?.error || "Request failed"}`;
+        const detailedError = new Error(errorMessage);
+        (detailedError as any).statusCode = res.status;
+        (detailedError as any).details = responseData;
+        throw detailedError;
       }
       generatedText = responseData?.choices?.[0]?.message?.content ?? "";
     }
@@ -71,7 +88,17 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("Error in ai-proxy:", e);
-    return new Response(JSON.stringify({ error: String((e as Error).message || e) }), {
+    
+    // Return detailed error information for debugging
+    const errorDetails = {
+      error: String((e as Error).message || e),
+      statusCode: responseData?.status || 500,
+      details: responseData || null,
+      timestamp: new Date().toISOString(),
+      model: model || "unknown"
+    };
+    
+    return new Response(JSON.stringify(errorDetails), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

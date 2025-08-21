@@ -159,19 +159,43 @@ const Index = () => {
       const responseTime = Date.now() - startTime;
       
       if (fnErr) {
-        // Create error log
+        // Handle detailed error information
+        let errorMessage = fnErr.message;
+        let detailedError = fnErr.message;
+        
+        if (fnRes && typeof fnRes === 'object') {
+          const errorData = fnRes as any;
+          if (errorData.error) {
+            errorMessage = errorData.error;
+            detailedError = `${errorData.error}\n\nDetails:\nStatus: ${errorData.statusCode || 'Unknown'}\nModel: ${errorData.model || model}\nTime: ${errorData.timestamp || 'Unknown'}`;
+            
+            if (errorData.details) {
+              detailedError += `\nAPI Response: ${JSON.stringify(errorData.details, null, 2)}`;
+            }
+          }
+        }
+        
+        // Create error log with detailed information
         const errorLog: LogEntry = {
           id: `log-${Date.now()}`,
           timestamp: new Date().toISOString(),
           model,
           success: false,
-          error: fnErr.message,
+          error: detailedError,
           responseTime,
           requestContent: text,
           responseContent: "",
         };
         
-        throw fnErr;
+        // Add error message with log for user to see detailed error
+        const errorMsg: Message = {
+          role: "assistant",
+          content: `❌ **Error occurred while generating response**\n\n${errorMessage}`,
+          log: errorLog
+        };
+        setMessages((prev) => [...prev, errorMsg]);
+        
+        throw new Error(errorMessage);
       }
 
       const aiText = (fnRes as any)?.generatedText as string;
