@@ -12,8 +12,13 @@ serve(async (req) => {
   }
 
   try {
-    const { model, messages } = await req.json();
+    console.log("ai-proxy called with method:", req.method);
+    const requestBody = await req.json();
+    const { model, messages } = requestBody;
+    console.log("Request received - model:", model, "messages count:", messages?.length);
+    
     if (!model || !messages) {
+      console.error("Missing required fields - model:", !!model, "messages:", !!messages);
       return new Response(JSON.stringify({ error: "Missing model or messages" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -21,11 +26,15 @@ serve(async (req) => {
     }
 
     let generatedText = "";
-    let responseData: any;
+    let responseData: any = null;
 
     if (String(model).startsWith("grok")) {
+      console.log("Using xAI API for model:", model);
       const xaiKey = Deno.env.get("XAI_API_KEY");
-      if (!xaiKey) throw new Error("Missing XAI_API_KEY secret");
+      if (!xaiKey) {
+        console.error("XAI_API_KEY not found in environment");
+        throw new Error("Missing XAI_API_KEY secret");
+      }
 
       const res = await fetch("https://api.x.ai/v1/chat/completions", {
         method: "POST",
@@ -47,8 +56,12 @@ serve(async (req) => {
       }
       generatedText = responseData?.choices?.[0]?.message?.content ?? "";
     } else {
+      console.log("Using OpenAI API for model:", model);
       const openaiKey = Deno.env.get("OPENAI_API_KEY");
-      if (!openaiKey) throw new Error("Missing OPENAI_API_KEY secret");
+      if (!openaiKey) {
+        console.error("OPENAI_API_KEY not found in environment");
+        throw new Error("Missing OPENAI_API_KEY secret");
+      }
       const res = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -79,6 +92,7 @@ serve(async (req) => {
       generatedText = responseData?.choices?.[0]?.message?.content ?? "";
     }
 
+    console.log("API call successful, response received");
     return new Response(JSON.stringify({ 
       generatedText, 
       model: responseData?.model,
@@ -95,7 +109,6 @@ serve(async (req) => {
       statusCode: (e as any)?.statusCode || 500,
       details: (e as any)?.details || null,
       timestamp: new Date().toISOString(),
-      model: (req.method === 'POST' ? ((await req.clone().json()).model) : "unknown") || "unknown"
     };
     
     return new Response(JSON.stringify(errorDetails), {

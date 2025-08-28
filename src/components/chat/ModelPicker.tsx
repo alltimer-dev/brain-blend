@@ -6,7 +6,7 @@ export const MODEL_OPTIONS: ModelOption[] = [
   { id: "gpt-5-2025-08-07", label: "GPT-5 - smartest" },
   { id: "gpt-4.1-2025-04-14", label: "GPT-4.1 - best research" },
   { id: "gpt-4o-mini", label: "GPT-4o-mini - fastest" },
-  { id: "gpt-3.5-turbo", label: "GPT-3.5 - most economic" },
+  { id: "gpt-4o", label: "GPT-4o - most economic" },
 ];
 
 export function ModelPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
