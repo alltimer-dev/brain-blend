@@ -3,11 +3,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export type ModelOption = { id: string; label: string };
 
 export const MODEL_OPTIONS: ModelOption[] = [
-  { id: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
-  { id: "gpt-4o", label: "GPT-4" },
-  { id: "gpt-5-2025-08-07", label: "GPT-5" },
-  { id: "grok-2", label: "Grok 3" },
-  { id: "grok-2-latest", label: "Grok 4" },
+  { id: "gpt-5-2025-08-07", label: "GPT-5 - smartest" },
+  { id: "gpt-4.1-2025-04-14", label: "GPT-4.1 - best research" },
+  { id: "gpt-4o-mini", label: "GPT-4o-mini - fastest" },
+  { id: "gpt-3.5-turbo", label: "GPT-3.5 - most economic" },
 ];
 
 export function ModelPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
