@@ -111,6 +111,21 @@ const Index = () => {
     }
   };
 
+  const handleEditConversation = async (id: string, newTitle: string) => {
+    const { error } = await supabase
+      .from("conversations")
+      .update({ title: newTitle })
+      .eq("id", id);
+    if (error) {
+      toast({ title: "Failed to update conversation", description: error.message });
+      return;
+    }
+    setConversations((prev) => 
+      prev.map((c) => c.id === id ? { ...c, title: newTitle } : c)
+    );
+    toast({ title: "Conversation updated", description: "Title changed successfully" });
+  };
+
   const ensureConversation = async (firstMessage?: string) => {
     if (activeId && conversations.find((c) => c.id === activeId)) return activeId;
     if (!userId) return null;
@@ -293,6 +308,7 @@ const Index = () => {
                 activeId={activeId}
                 onSelect={(id) => setActiveId(id)}
                 onDelete={handleDeleteChat}
+                onEdit={handleEditConversation}
                 onNew={handleNewChat}
               />
             </div>
