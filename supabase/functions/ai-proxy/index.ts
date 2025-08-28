@@ -92,10 +92,10 @@ serve(async (req) => {
     // Return detailed error information for debugging
     const errorDetails = {
       error: String((e as Error).message || e),
-      statusCode: responseData?.status || 500,
-      details: responseData || null,
+      statusCode: (e as any)?.statusCode || 500,
+      details: (e as any)?.details || null,
       timestamp: new Date().toISOString(),
-      model: model || "unknown"
+      model: (req.method === 'POST' ? ((await req.clone().json()).model) : "unknown") || "unknown"
     };
     
     return new Response(JSON.stringify(errorDetails), {
