@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { TypingIndicator } from "@/components/chat/TypingIndicator";
 import { ModelPicker, MODEL_OPTIONS } from "@/components/chat/ModelPicker";
 import { SidebarConversations, type Conversation } from "@/components/chat/SidebarConversations";
 import { LogOut, Menu } from "lucide-react";
@@ -344,6 +345,7 @@ const Index = () => {
               ) : (
                 <div className="space-y-1">
                   {activeMessages.map((m) => <ChatMessage key={m.id + m.created_at} role={m.role} content={m.content} model={m.model} log={m.log} />)}
+                  {sending && <TypingIndicator />}
                 </div>
               )}
             </div>
